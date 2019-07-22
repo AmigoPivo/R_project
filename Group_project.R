@@ -1,5 +1,5 @@
 rm(list = ls())
-setwd("C:/Users/pivo/Desktop/UT MSBA/Summer 2019/Predictive Models/Project")
+setwd("C:/Users/pivo/Desktop/UT MSBA/Summer 2019/Predictive Models/Project") #remember to change your dir
 library(readr)
 set.seed(79643)
 
