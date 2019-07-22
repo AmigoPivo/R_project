@@ -36,6 +36,7 @@ View(df_genre2)
 summary(df_genre2)
 
 train = .7
+test = .3 #not nec
 
 train_sample = sample(1:nrow(df_genre2), nrow(df_genre2)*train)
 train_df = df_genre2[train_sample,]
