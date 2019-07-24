@@ -1,6 +1,7 @@
 rm(list = ls())
-setwd("C:/Users/pivo/Desktop/UT MSBA/Summer 2019/Predictive Models/Project") #remember to change your dir
+setwd("C:/Users/pivo/Desktop/UT MSBA/Summer 2019/Predictive Models/Project")
 library(readr)
+library(kknn)
 set.seed(79643)
 
 df_spotify <- read_csv("songDb.csv")
@@ -30,37 +31,42 @@ for (x in genres_aux){
   df_genre2[df_genre2[x]==1, 'genre'] = x
 }
 df_genre2 <- df_genre2[,!(names(df_genre2) %in% genres_aux)]
-
+df_genre2$genre = factor(df_genre2$genre)
+df_genre2$Tempo = as.numeric(df_genre2$Tempo)
 dim(df_genre2)
 View(df_genre2)
 summary(df_genre2)
 
 train = .7
-test = .3 #not nec
 
 train_sample = sample(1:nrow(df_genre2), nrow(df_genre2)*train)
 train_df = df_genre2[train_sample,]
 test_df = df_genre2[-train_sample,]
 
-write_csv(test_df, 'test.csv')
-write_csv(train_df, 'train.csv')
+
+#write_csv(test_df, 'test.csv')
+#write_csv(train_df, 'train.csv')
 
 
-# sample_df = df_clean[sample,]
-# 
-# View(table(df_clean$Genre))
-# corr.test(df_clean)
-# 
-# 
-# sample= sample(1:nrow(df_clean), nrow(df_clean)*0.1)
-# sample_df = df_clean[sample,]
-# 
-# 
-# library(PerformanceAnalytics)
-# chart.Correlation(sample_df)
-# 
-# library(psych)
-# pairs.panels(sample_df)
-# 
-# View(genres)
-# 
+#near = kknn(genre~(.-Genre-ID-Mode),train_df,test_df,k=50, kernel = "rectangular")
+near = kknn(genre~(Energy+Danceability+Acousticness+Loudness+Speechness+Instrumentalness),train_df,test_df,k=50, kernel = "rectangular")
+fitted.values(near)
+near$fitted
+
+
+near = kknn(genre~(.-ID-Mode-Duration_ms-Genre),train_df,test_df,k=25, kernel = "rectangular")
+labels <- fitted.values(near)
+table(labels, test_df$genre)
+#summary(near)
+
+###############
+#   K-Folds   #
+###############
+library(caret)
+
+model_knn <- train.kknn(genre~(.-ID-Mode-Duration_ms-Genre), data=train_df, kmax = 100, kcv = 10)
+model_knn2 <- train.kknn(genre~(.-ID-Mode-Duration_ms-Genre), data=train_df, kmax = 100, kcv = 5)
+
+model_33 = kknn(genre~(.-ID-Mode-Duration_ms-Genre),train_df,test_df,k=33, kernel = "rectangular")
+table(model_33$fitted.values, test_df$genre)
+sum(diag(table(model_33$fitted.values, test_df$genre)))/length(model_33$fitted.values)
