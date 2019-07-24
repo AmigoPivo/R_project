@@ -1,0 +1,107 @@
+---
+title: "STA Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+filename = "test.csv"
+test_data <- read.csv(filename,header=T)
+filename = "train.csv"
+train_data <- read.csv(filename,header=T)
+View(train_data)
+```
+```{r}
+names(test)
+?knn
+```
+```{r}
+boxplot(Danceability~genre,data=train_data, xlab="genre", ylab="Danceability")
+boxplot(Energy~genre,data=train_data, xlab="genre", ylab="Energy")
+boxplot(Key~genre,data=train_data, xlab="genre", ylab="Key")
+boxplot(Loudness~genre,data=train_data, xlab="genre", ylab="Loudness")
+boxplot(Mode~genre,data=train_data, xlab="genre", ylab="Mode")
+boxplot(Speechness~genre,data=train_data, xlab="genre", ylab="Speechness")
+boxplot(Acousticness~genre,data=train_data, xlab="genre", ylab="Acousticness")
+boxplot(Instrumentalness~genre,data=train_data, xlab="genre", ylab="Instrumentalness")
+boxplot(Liveness~genre,data=train_data, xlab="genre", ylab="Liveness")
+boxplot(Valence~genre,data=train_data, xlab="genre", ylab="Valence")
+boxplot(Tempo~genre,data=train_data, xlab="genre", ylab="Tempo")
+boxplot(Duration_ms~genre,data=train_data, xlab="genre", ylab="Duration_ms")
+
+```
+
+```{r}
+library(class)
+library(kknn)
+#54, 1:10, 13 -- 0.466
+#42 1,2,4,6,7,8,9,10,13 -- 0.466
+
+        
+kk = c(40,41,42,43) #20,30,40,50,60,70,80,90
+col = c(1:2,4,6:10,13)
+
+MSE = NULL
+scale_train_data <- scale(train_data[,col]) 
+scale_test_data <- scale(test_data[,col])
+
+for(j in kk){
+  nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=j)
+  result <-data.frame(test_data$genre,nearest)
+  
+  result[result$nearest == result$test_data.genre,"Equal"] <- 1
+  aux = 1 - nrow(subset(result, result$Equal == 1)) / nrow(result)
+  MSE = c(MSE,aux)
+    
+}
+plot(kk,MSE,type="b",xlab="k",col="blue",ylab="MSE",lwd=2,cex.lab=1.2)
+
+#View(MSE)
+```
+
+```{r}
+  nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=40)
+  result <-data.frame(test_data$genre,nearest)
+  result[result$nearest == result$test_data.genre,"Equal"] <- 1
+  aux =  1 - nrow(subset(result, result$Equal == 1)) / nrow(result)
+  par(mfrow=c(1,1))
+  plot(scale_train_data, col=train_data$genre, cex=.8,pch=1)
+  
+  for(i in 1:10){
+    points(scale_test_data[i,1],scale_test_data[i,2], pch=18, col="orange", cex=2)
+    points(scale_test_data[i,1],scale_test_data[i,2], pch=18, col=nearest[i], cex=2)
+}
+
+```
+
+
+
+
+
+
+
+
