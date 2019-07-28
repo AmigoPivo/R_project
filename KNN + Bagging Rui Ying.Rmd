@@ -33,10 +33,10 @@ filename = "test.csv"
 test_data <- read.csv(filename,header=T)
 filename = "train.csv"
 train_data <- read.csv(filename,header=T)
-View(train_data)
+
 ```
 ```{r}
-names(test)
+names(test_data)
 ?knn
 ```
 ```{r}
@@ -68,13 +68,10 @@ col = c(1:2,4,6:10,13)
 MSE = NULL
 scale_train_data <- scale(train_data[,col]) 
 scale_test_data <- scale(test_data[,col])
-
+set.seed(1)
 for(j in kk){
   nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=j)
-  result <-data.frame(test_data$genre,nearest)
-  
-  result[result$nearest == result$test_data.genre,"Equal"] <- 1
-  aux = 1 - nrow(subset(result, result$Equal == 1)) / nrow(result)
+  aux =  mean(nearest != test_data$genre)
   MSE = c(MSE,aux)
     
 }
@@ -84,13 +81,13 @@ plot(kk,MSE,type="b",xlab="k",col="blue",ylab="MSE",lwd=2,cex.lab=1.2)
 ```
 
 ```{r}
-  nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=40)
-  result <-data.frame(test_data$genre,nearest)
-  result[result$nearest == result$test_data.genre,"Equal"] <- 1
-  aux =  1 - nrow(subset(result, result$Equal == 1)) / nrow(result)
-  par(mfrow=c(1,1))
-  plot(scale_train_data, col=train_data$genre, cex=.8,pch=1)
-  
+nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=40)
+result <-data.frame(test_data$genre,nearest)
+result[result$nearest == result$test_data.genre,"Equal"] <- 1
+aux =  1 - nrow(subset(result, result$Equal == 1)) / nrow(result)
+par(mfrow=c(1,1))
+plot(scale_train_data, col=train_data$genre, cex=.8,pch=1)
+
   for(i in 1:10){
     points(scale_test_data[i,1],scale_test_data[i,2], pch=18, col="orange", cex=2)
     points(scale_test_data[i,1],scale_test_data[i,2], pch=18, col=nearest[i], cex=2)
@@ -98,10 +95,23 @@ plot(kk,MSE,type="b",xlab="k",col="blue",ylab="MSE",lwd=2,cex.lab=1.2)
 
 ```
 
+```{r}
+library(randomForest)
+set.seed (1)
 
-
-
-
-
+MSE = NULL
+ntree = c(10:40)
+for (i in ntree){
+  bag.music =randomForest(genre ~ Danceability + Energy + Key + Loudness + Mode           + Speechness + Acousticness + Instrumentalness + Liveness + Valence + Tempo + Duration_ms, data=train_data ,
+  mtry=12, ntree =25) 
+  bag.music
+  
+  yhat.bag = predict(bag.music,newdata = test_data)
+  aux =  mean( yhat.bag != test_data$genre)
+  MSE = c(MSE,aux)
+}
+plot(ntree, MSE,type="b",xlab="ntree",col="blue",ylab="MSE",lwd=2,cex.lab=1.2)
+MSE[which.min(MSE)]
+```
 
 
