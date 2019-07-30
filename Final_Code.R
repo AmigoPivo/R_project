@@ -74,7 +74,7 @@ for(j in kk){
   nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_data$genre, k=j)
   aux =  mean(nearest == test_data$genre)
   Accuracy_knn = c(Accuracy_knn,aux)
-    
+  
 }
 plot(kk,Accuracy_knn,type="b",xlab="k",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2)
 Accuracy_knn[which.max(Accuracy_knn)]
