@@ -114,7 +114,7 @@ options(digits=7)
 library(randomForest)
 set.seed (79643)
 Accuracy_bagging = NULL
-ntree <-c(50,200,500)
+ntree <-c(50,100,200,500,2000)
 for (i in ntree){
   bag.music =randomForest(genre ~ Danceability + Energy + Key + Loudness + Mode + Speechness + Acousticness + Instrumentalness + Liveness + Valence + Tempo + Duration_ms, data=train_data ,
                           mtry=12, ntree = i) 
@@ -123,8 +123,17 @@ for (i in ntree){
   aux =  mean( yhat.bag == test_data$genre)
   Accuracy_bagging = c(Accuracy_bagging,aux)
 }
-plot(ntree, Accuracy_bagging,type="b",xlab="ntree",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2)
+plot(ntree, Accuracy_bagging,type="b",xlab="ntree",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2, main = "ntree vs. Accuracy")
 Accuracy_bagging[which.max(Accuracy_bagging)]
+
+# training model with the optimal number of trees and splits
+model_rf<-randomForest(genre~.-ID-Genre,data=train_df,ntree=100,mtry=12,importance=TRUE)
+
+# To check important variables
+importance(model_rf)      
+
+# plotting the importance of predictors
+varImpPlot(model_rf) 
 
 
 ## Random Forest
@@ -137,7 +146,7 @@ library(randomForest)
 #fit random forest and plot variable importance
 
 # array of number of tree values to use
-ntr<-c(50,200,500)
+ntr<-c(50,100,200,500,2000)
 max_acc=0
 
 # Training model with different number of trees and splits to get the optimal values for each
