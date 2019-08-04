@@ -127,7 +127,7 @@ plot(ntree, Accuracy_bagging,type="b",xlab="ntree",col="blue",ylab="Accuracy",lw
 Accuracy_bagging[which.max(Accuracy_bagging)]
 
 # training model with the optimal number of trees and splits
-model_rf<-randomForest(genre~.-ID-Genre,data=train_df,ntree=100,mtry=12,importance=TRUE)
+model_rf<-randomForest(genre~.-ID-Genre,data=train_df,ntree=2000,mtry=12,importance=TRUE)
 
 # To check important variables
 importance(model_rf)      
@@ -195,3 +195,4 @@ summary(pred)
 test_x = cbind(test_df$genre, pred)
 View(test_df)
 table(test_df$genre, round(pred))
+
