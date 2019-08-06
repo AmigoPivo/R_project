@@ -1,0 +1,143 @@
+```{r}
+## read files
+library(readr)
+library(kknn)
+library(gbm)
+set.seed(79643)
+
+df_spotify <- read_csv("songDb.csv")
+genres <- read_table("genre_dataset.txt", col_names = c('Genre'))
+#View(df_spotify)
+
+df_clean <- na.omit(df_spotify)
+
+drop <- c('Uri','Name','Ref_Track', 'time_signature', 'Type', 'URL_features')
+df_clean <- df_clean[, !(names(df_clean)%in%drop)]
+df_clean <- df_clean[(df_clean$Duration_ms > 120000),]
+#View(df_clean)
+dim(df_clean)
+
+df_genre <- df_clean
+genres_aux = c('rock', 'pop', 'country','classical','hiphop','jazz','blues')
+m_genre = matrix(data = NA, nrow = nrow(df_genre), ncol = 7)
+colnames(m_genre) = genres_aux
+
+for (x in genres_aux) {
+  df_genre[grepl(x,df_genre$Genre),x] <- 1
+  df_genre[!grepl(x,df_genre$Genre),x] <- 0
+}
+
+df_genre2 <- df_genre[rowSums(df_genre[15:21])==1,]
+for (x in genres_aux){
+  df_genre2[df_genre2[x]==1, 'genre'] = x
+}
+df_genre2 <- df_genre2[,!(names(df_genre2) %in% genres_aux)]
+df_genre2$genre = factor(df_genre2$genre)
+df_genre2$Tempo = as.numeric(df_genre2$Tempo)
+dim(df_genre2)
+View(df_genre2)
+summary(df_genre2)
+
+train = .7
+
+train_sample = sample(1:nrow(df_genre2), nrow(df_genre2)*train)
+train_df = df_genre2[train_sample,]
+test_df = df_genre2[-train_sample,]
+```
+```{r}
+# knn
+library(class)
+library(kknn)
+library(tidyverse)
+set.seed(79643)
+kk = c(20,30,40,50,60,70,80,90) 
+col = c(1:2,4,6:10,13)
+Accuracy_knn = NULL
+
+# scale data
+scale_train_data <- scale(train_df[,col]) 
+scale_test_data <- scale(test_df[,col])
+set.seed(1)
+
+# try different k = 20,30,40,50,60,70,80,90
+for(j in kk){
+  nearest <- knn(train = scale_train_data, test = scale_test_data, cl=train_df$genre, k=j)
+  
+  # predict results and get a list of accuracy rates
+  aux =  mean(nearest == test_df$genre)
+  Accuracy_knn = c(Accuracy_knn,aux)
+  
+}
+
+# plot k versus accuracy rates
+# plot(kk,Accuracy_knn,type="b",xlab="k",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2)
+plot <-ggplot() + geom_line(mapping = aes(x = kk, y = Accuracy_knn), color = "red")
+plot + labs(x = "Number of K", y = "Accuracy Rate")+ theme_bw()
+
+# get highest accuracy rate
+Accuracy_knn[which.max(Accuracy_knn)]
+
+```
+
+```{r}
+## Bagging 
+library(randomForest)
+set.seed (79643)
+Accuracy_bagging = NULL
+ntree <-c(50,100,200,500,2000)
+
+# try trees = 50,100,200,500,2000 with all the variables
+for (i in ntree){
+  bag.music =randomForest(genre ~ Danceability + Energy + Key + Loudness + Mode + Speechness + Acousticness + Instrumentalness + Liveness + Valence + Tempo + Duration_ms, data=train_df ,
+                          mtry=12, ntree = i) 
+  
+  # predict reuslt and calculate accuracy rate
+  yhat.bag = predict(bag.music,newdata = test_df)
+  aux =  mean( yhat.bag == test_df$genre)
+  
+  # get a list of accuracy rates 
+  Accuracy_bagging = c(Accuracy_bagging,aux)
+}
+
+# plot number of trees versus accuracy rates
+plot(ntree, Accuracy_bagging,type="b",xlab="ntree",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2, main = "ntree vs. Accuracy")
+
+# get highest accuracy rate
+Accuracy_bagging[which.max(Accuracy_bagging)]
+
+set.seed (79643)
+# training model with the optimal number of trees and splits
+model_bagging<-randomForest(genre~.-ID-Genre,data=train_df,ntree=2000,mtry=12,importance=TRUE)
+
+# To check important variables
+importance(model_bagging)      
+
+# plotting the importance of predictors
+varImpPlot(model_bagging) 
+```
+
+```{r}
+## Random Forest Plot: n_vars versus Accuracy
+Accuracy_rf = NULL
+n_vars = c(3:8)
+set.seed(79643)
+
+# get accuracy rate for number of variables from 3-8 with 2000 trees
+for (i in n_vars) {
+  model_rf <- randomForest(genre~.-ID-Genre, data = train_df, ntree = 2000, mtry = i, importance = TRUE)
+  
+  # predit result using rf model
+  predValid <- predict(model_rf, newdata =test_df, type = "class")
+  yhat.bag = predict(model_rf,newdata = test_df)
+  aux =  mean( yhat.bag == test_df$genre)
+  
+  # get a list of accuracy rates
+  Accuracy_rf = c(Accuracy_rf,aux)
+}
+
+# plot number of variables versus accuracy
+# plot(n_vars, Accuracy_rf,type="b",xlab="n_vars",col="blue",ylab="Accuracy",lwd=2,cex.lab=1.2, main = "n_vars vs. Accuracy")
+plot <-ggplot() + geom_line(mapping = aes(x = n_vars, y = Accuracy_rf), color = "red")
+plot + labs(x = "Number of Variables", y = "Accuracy Rate")+ theme_bw()
+
+```
